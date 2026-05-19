@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ventos Trade Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+<header>
+  <div class="logo">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+    <h1>Ventos <span>Trade Analytics</span></h1>
+  </div>
+  <div class="header-meta">
+    <span id="totalRecords">0 registros</span>
+    <span class="sep">|</span>
+    <span id="dateRange">—</span>
+  </div>
+</header>
+
+<main>
+  <!-- Filters -->
+  <section class="filters-bar" id="filtersBar">
+    <div class="filter-group">
+      <label>Período</label>
+      <input type="date" id="filterDateFrom">
+      <span>até</span>
+      <input type="date" id="filterDateTo">
+    </div>
+    <div class="filter-group">
+      <label>País Comprador</label>
+      <select id="filterBuyerCountry"><option value="">Todos</option></select>
+    </div>
+    <div class="filter-group">
+      <label>País Fornecedor</label>
+      <select id="filterSupplierCountry"><option value="">Todos</option></select>
+    </div>
+    <div class="filter-group">
+      <label>Buyer</label>
+      <select id="filterBuyer"><option value="">Todos</option></select>
+    </div>
+    <div class="filter-group">
+      <label>Fornecedor</label>
+      <select id="filterSupplier"><option value="">Todos</option></select>
+    </div>
+    <div class="filter-group">
+      <label>Direção</label>
+      <select id="filterDirection"><option value="">Todos</option></select>
+    </div>
+    <button id="btnClear" class="btn-clear">Limpar Filtros</button>
+  </section>
+
+  <!-- KPI Cards -->
+  <section class="kpi-row">
+    <div class="kpi-card"><div class="kpi-label">Valor Total (USD)</div><div class="kpi-value" id="kpiTotalValue">—</div></div>
+    <div class="kpi-card"><div class="kpi-label">Transações</div><div class="kpi-value" id="kpiTotalTx">—</div></div>
+    <div class="kpi-card"><div class="kpi-label">Quantidade Total (kg)</div><div class="kpi-value" id="kpiTotalQty">—</div></div>
+    <div class="kpi-card"><div class="kpi-label">Preço Médio / kg</div><div class="kpi-value" id="kpiAvgPrice">—</div></div>
+    <div class="kpi-card"><div class="kpi-label">Países Compradores</div><div class="kpi-value" id="kpiBuyerCountries">—</div></div>
+    <div class="kpi-card"><div class="kpi-label">Fornecedores</div><div class="kpi-value" id="kpiSuppliers">—</div></div>
+  </section>
+
+  <!-- Charts Row 1 -->
+  <section class="chart-row">
+    <div class="chart-card wide">
+      <h3>📈 Faturamento Ventos por Mês</h3>
+      <canvas id="chartTimeline"></canvas>
+    </div>
+    <div class="chart-card">
+      <h3>🌍 Top 10 Países Destino</h3>
+      <canvas id="chartBuyerCountry"></canvas>
+    </div>
+  </section>
+
+  <!-- Charts Row 2 -->
+  <section class="chart-row">
+    <div class="chart-card">
+      <h3>🏭 Top 10 Fornecedores Ventos</h3>
+      <canvas id="chartSuppliers"></canvas>
+    </div>
+    <div class="chart-card">
+      <h3>🛒 Top 10 Clientes Ventos</h3>
+      <canvas id="chartBuyers"></canvas>
+    </div>
+  </section>
+
+  <!-- Charts Row 3 -->
+  <section class="chart-row">
+    <div class="chart-card">
+      <h3>🗺️ Origem dos Insumos</h3>
+      <canvas id="chartSupplierCountry"></canvas>
+    </div>
+    <div class="chart-card wide">
+      <h3>🧪 Top 15 Produtos Ventos (Valor)</h3>
+      <canvas id="chartProducts"></canvas>
+    </div>
+  </section>
+
+  <!-- Price x Product x Region -->
+  <section class="chart-row">
+    <div class="chart-card" style="grid-column:1/-1;height:440px;">
+      <h3>💰 Preço Médio (USD/kg) por Produto × Região de Destino</h3>
+      <canvas id="chartPriceRegion"></canvas>
+    </div>
+  </section>
+
+  <!-- Insights Section -->
+  <section class="insights-section">
+    <div class="insights-header">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+      <h3>Resumo Executivo (Insights)</h3>
+    </div>
+    <div class="insights-content" id="insightsContent">
+      Carregando insights...
+    </div>
+  </section>
+
+  <!-- Data Table -->
+  <section class="table-section">
+    <h3>Detalhamento das Transações <small id="tableCount"></small></h3>
+    <div class="table-wrap">
+      <table id="dataTable">
+        <thead>
+          <tr>
+            <th>Data</th><th>Buyer</th><th>País</th><th>Fornecedor</th><th>País Forn.</th>
+            <th>Produto</th><th>Qtd</th><th>Unidade</th><th>Valor (USD)</th><th>Direção</th>
+          </tr>
+        </thead>
+        <tbody id="dataBody"></tbody>
+      </table>
+    </div>
+    <div class="pagination" id="pagination"></div>
+  </section>
+</main>
+
+<div class="loader" id="loader"><div class="spinner"></div><p>Carregando dados…</p></div>
+
+<script src="dashboard.js"></script>
+</body>
+</html>
