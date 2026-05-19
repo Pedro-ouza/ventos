@@ -166,18 +166,18 @@ async function loadData(){
   };
   allData=results.map(r=>{
     const d=parseDate(r[K.data]);if(!d)return null;
-    const buyer=canonBuyer(r[K.buyer]||'');
-    const supplier=canonSupplier(r[K.provedor]||'');
-    const bCountry=(r[K.buyerCountry]||'').trim();
+    const buyer=canonBuyer(r[K.buyer]||'').toLowerCase();
+    const supplier=canonSupplier(r[K.provedor]||'').toLowerCase();
+    const bCountry=(r[K.buyerCountry]||'').trim().toLowerCase();
     return{date:d,dateStr:r[K.data],buyer,buyerCountry:bCountry,
-      supplier,supplierCountry:(r[K.paisProv]||'').trim(),
-      product:simplifyProduct(r[K.produto]||''),
-      productRaw:(r[K.produto]||'').trim(),
+      supplier,supplierCountry:(r[K.paisProv]||'').trim().toLowerCase(),
+      product:simplifyProduct(r[K.produto]||'').toLowerCase(),
+      productRaw:(r[K.produto]||'').trim().toLowerCase(),
       hsCode:(r[K.hs]||'').trim(),
-      qty:parseNum(r[K.qtd]),unit:(r[K.unidade]||'').trim(),
-      value:parseNum(r[K.valor]),direction:(r[K.direcao]||'').trim(),
-      region:regionOf(bCountry),
-      isInternal:buyer.toLowerCase().includes('ventos')||buyer.toLowerCase().includes('ernesto')};
+      qty:parseNum(r[K.qtd]),unit:(r[K.unidade]||'').trim().toLowerCase(),
+      value:parseNum(r[K.valor]),direction:(r[K.direcao]||'').trim().toLowerCase(),
+      region:regionOf(r[K.buyerCountry]||'').toLowerCase(),
+      isInternal:buyer.includes('ventos')||buyer.includes('ernesto')};
   }).filter(r => r && /ORANGE|NARANJA|LIMONENE|CPO|SINENSAL|SINENSIS/i.test(r.productRaw)).sort((a,b)=>a.date-b.date);
   populateFilters();applyFilters();
   document.getElementById('loader').classList.add('hidden');
@@ -217,7 +217,7 @@ function updateKPIs(){
   const uniqueSuppliers = new Set(
     filtered.map(r=>r.supplier)
       .filter(Boolean)
-      .map(s=>(s.toLowerCase().includes('ventos')||s.toLowerCase().includes('ernesto')) ? 'Grupo Ventos' : s)
+      .map(s=>(s.includes('ventos')||s.includes('ernesto')) ? 'grupo ventos' : s)
   ).size;
   document.getElementById('kpiSuppliers').textContent=uniqueSuppliers;
 }
