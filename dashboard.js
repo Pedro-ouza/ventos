@@ -27,7 +27,7 @@ function canonBuyer(s){
   if(/SHONU/.test(u))return'Shonu va Beklar';
   if(/TRAFALGAR/.test(u))return'Trafalgar SRL';
   if(/FRANSCENT/.test(u))return'Franscent Pvt Ltd';
-  if(/KERRY/.test(u))return'Kerry Ingredients India';
+  if(/KERRY/.test(u))return'Kerry Ingredients';
   if(/EXTRACTOS ANDINOS/.test(u))return'Extractos Andinos';
   if(/INTERNATIONAL FRAGRANCE/.test(u))return'Intl Fragrance Factory';
   if(/JOINT UKRAINIAN/.test(u))return'JV Ukrainian-German';
