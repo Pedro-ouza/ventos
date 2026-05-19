@@ -24,6 +24,18 @@
   </div>
 </header>
 
+<!-- Product Tabs -->
+<nav class="product-tabs">
+  <button class="tab-btn active" data-tab="limonene">
+    <span class="tab-dot" style="background:#6366f1"></span>
+    🍋 d-Limonene
+  </button>
+  <button class="tab-btn" data-tab="orange">
+    <span class="tab-dot" style="background:#fb923c"></span>
+    🍊 Orange Oil
+  </button>
+</nav>
+
 <main>
   <!-- Filters -->
   <section class="filters-bar" id="filtersBar">
@@ -69,7 +81,7 @@
   <!-- Charts Row 1 -->
   <section class="chart-row">
     <div class="chart-card wide">
-      <h3>📈 Faturamento Ventos por Mês</h3>
+      <h3 id="chartTimelineTitle">📈 Faturamento por Mês</h3>
       <canvas id="chartTimeline"></canvas>
     </div>
     <div class="chart-card">
@@ -81,11 +93,11 @@
   <!-- Charts Row 2 -->
   <section class="chart-row">
     <div class="chart-card">
-      <h3>🏭 Top 10 Fornecedores Ventos</h3>
+      <h3>🏭 Top 10 Fornecedores</h3>
       <canvas id="chartSuppliers"></canvas>
     </div>
     <div class="chart-card">
-      <h3>🛒 Top 10 Clientes Ventos</h3>
+      <h3>🛒 Top 10 Clientes Externos</h3>
       <canvas id="chartBuyers"></canvas>
     </div>
   </section>
@@ -97,7 +109,7 @@
       <canvas id="chartSupplierCountry"></canvas>
     </div>
     <div class="chart-card wide">
-      <h3>🧪 Top 15 Produtos Ventos (Valor)</h3>
+      <h3 id="chartProductsTitle">🧪 Top 15 Variantes (Valor)</h3>
       <canvas id="chartProducts"></canvas>
     </div>
   </section>
@@ -105,7 +117,7 @@
   <!-- Price x Product x Region -->
   <section class="chart-row">
     <div class="chart-card" style="grid-column:1/-1;height:440px;">
-      <h3>💰 Preço Médio (USD/kg) por Produto × Região de Destino</h3>
+      <h3>💰 Preço Médio (USD/kg) por Variante × Região de Destino</h3>
       <canvas id="chartPriceRegion"></canvas>
     </div>
   </section>
@@ -129,7 +141,7 @@
         <thead>
           <tr>
             <th>Data</th><th>Buyer</th><th>País</th><th>Fornecedor</th><th>País Forn.</th>
-            <th>Produto</th><th>Qtd</th><th>Unidade</th><th>Valor (USD)</th><th>Direção</th>
+            <th>Produto / Variante</th><th>Qtd</th><th>Unidade</th><th>Valor (USD)</th><th>Direção</th>
           </tr>
         </thead>
         <tbody id="dataBody"></tbody>
