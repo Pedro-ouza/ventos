@@ -64,6 +64,45 @@ header {
 /* Main */
 main { max-width: 1440px; margin: 0 auto; padding: 24px 32px 60px; }
 
+/* Product Category Tabs */
+.product-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  padding: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  width: fit-content;
+}
+
+.product-tab {
+  padding: 10px 24px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: var(--text2);
+  font-size: .85rem;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all .25s ease;
+  white-space: nowrap;
+}
+
+.product-tab:hover {
+  color: var(--text);
+  background: rgba(99, 102, 241, .08);
+}
+
+.product-tab.active {
+  background: linear-gradient(135deg, rgba(99, 102, 241, .2), rgba(52, 211, 153, .15));
+  border-color: var(--accent);
+  color: var(--text);
+  font-weight: 600;
+  box-shadow: 0 2px 12px rgba(99, 102, 241, .15);
+}
+
 /* Filters */
 .filters-bar {
   display: flex;

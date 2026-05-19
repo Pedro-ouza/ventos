@@ -1,6 +1,6 @@
 const FILES=['Ventos(DATA).csv','Ventos_2(DATA).csv'];
 const PAGE_SIZE=50;
-let allData=[],filtered=[],charts={},currentPage=1;
+let allData=[],filtered=[],charts={},currentPage=1,activeCategory='all';
 const PAL=['#6366f1','#818cf8','#34d399','#fb923c','#f87171','#a78bfa','#38bdf8','#fbbf24','#f472b6','#22d3ee','#4ade80','#e879f9','#facc15','#2dd4bf','#c084fc'];
 
 function parseNum(s){if(!s)return 0;s=s.toString().trim().replace(/\./g,'').replace(',','.');const n=parseFloat(s);return isNaN(n)?0:n;}
@@ -118,6 +118,15 @@ function simplifyProduct(s){
   return s.substring(0,30);
 }
 
+/* ── Product category classification ── */
+function classifyCategory(productRaw, productSimplified) {
+  const raw = productRaw.toUpperCase();
+  const simp = productSimplified.toUpperCase();
+  if (/D-LIMONENE|LIMONENE-D|LIMONENO/.test(raw) || /D-LIMONENE/.test(simp)) return 'd-limonene';
+  // Everything else in the orange line = orange oil (CPO, cold press, orange, naranja, sinensal, sinensis)
+  return 'orange-oil';
+}
+
 /* ── Region grouping ── */
 function regionOf(country){
   if(!country)return'Outros';
@@ -177,7 +186,8 @@ async function loadData(){
       qty:parseNum(r[K.qtd]),unit:(r[K.unidade]||'').trim().toLowerCase(),
       value:parseNum(r[K.valor]),direction:(r[K.direcao]||'').trim().toLowerCase(),
       region:regionOf(r[K.buyerCountry]||'').toLowerCase(),
-      isInternal:buyer.includes('ventos')||buyer.includes('ernesto')};
+      isInternal:buyer.includes('ventos')||buyer.includes('ernesto'),
+      category:classifyCategory((r[K.produto]||''), simplifyProduct(r[K.produto]||''))};
   }).filter(r => r && /ORANGE|NARANJA|LIMONENE|CPO|SINENSAL|SINENSIS/i.test(r.productRaw)).sort((a,b)=>a.date-b.date);
   populateFilters();applyFilters();
   document.getElementById('loader').classList.add('hidden');
@@ -196,6 +206,7 @@ function applyFilters(){
   const from=gv('filterDateFrom'),to=gv('filterDateTo'),bc=gv('filterBuyerCountry'),
     sc=gv('filterSupplierCountry'),bu=gv('filterBuyer'),su=gv('filterSupplier'),di=gv('filterDirection');
   filtered=allData.filter(r=>{
+    if(activeCategory!=='all'&&r.category!==activeCategory)return false;
     if(from&&r.date<new Date(from))return false;
     if(to&&r.date>new Date(to+'T23:59:59'))return false;
     if(bc&&r.buyerCountry!==bc)return false;if(sc&&r.supplierCountry!==sc)return false;
@@ -505,4 +516,15 @@ document.querySelectorAll('.filters-bar select, .filters-bar input').forEach(el=
 document.getElementById('btnClear').addEventListener('click',()=>{
   document.querySelectorAll('.filters-bar select').forEach(s=>s.value='');
   document.querySelectorAll('.filters-bar input').forEach(i=>i.value='');applyFilters();});
+
+/* ── Product Category Tabs ── */
+document.querySelectorAll('.product-tab').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.product-tab').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    activeCategory=btn.dataset.category;
+    applyFilters();
+  });
+});
+
 loadData();
