@@ -363,8 +363,29 @@ function updateInsights() {
 
   const topBuyer = topN(extData, 'buyer', 'value', 1)[0];
   const topReg = topN(filtered, 'region', 'value', 1)[0];
-  const topProd = topN(filtered, 'product', 'value', 1)[0];
   const topSup = topN(filtered, 'supplier', 'value', 1)[0];
+
+  const productFlows = {};
+  filtered.forEach(r => {
+    if (!r.product || r.qty <= 0) return;
+    if (!productFlows[r.product]) {
+      productFlows[r.product] = { totalValue: 0, totalQty: 0, routes: {} };
+    }
+    const flow = productFlows[r.product];
+    flow.totalValue += r.value;
+    flow.totalQty += r.qty;
+    
+    const sc = r.supplierCountry || 'Origem Indefinida';
+    const bc = r.buyerCountry || 'Destino Indefinido';
+    const routeKey = `${sc} ➔ ${bc}`;
+    if (!flow.routes[routeKey]) flow.routes[routeKey] = { value: 0, qty: 0 };
+    flow.routes[routeKey].value += r.value;
+    flow.routes[routeKey].qty += r.qty;
+  });
+
+  const topProductsDetailed = Object.entries(productFlows)
+    .sort((a, b) => b[1].totalValue - a[1].totalValue)
+    .slice(0, 3);
 
   const intData = filtered.filter(r => r.isInternal);
   const biggestExt = extData.reduce((max, r) => r.value > (max ? max.value : 0) ? r : max, null);
@@ -380,8 +401,17 @@ function updateInsights() {
     const pKg = biggestInt.qty > 0 ? biggestInt.value / biggestInt.qty : 0;
     html += `<li><strong>Maior Transferência Interna:</strong> <strong>${biggestInt.product}</strong> enviado de <em>${biggestInt.supplierCountry}</em> para <em>${biggestInt.buyer} (${biggestInt.buyerCountry})</em> no valor de <strong>$ ${fmtNum(biggestInt.value, 2)}</strong> (Preço médio: $ ${fmtNum(pKg, 2)}/kg).</li>`;
   }
-  if (topProd) {
-    html += `<li><strong>Produto Destaque:</strong> De forma agregada, o insumo mais rentável foi <strong>${topProd[0]}</strong>, responsável por <strong>${pct(topProd[1])}</strong> de toda a receita no período.</li>`;
+  if (topProductsDetailed.length > 0) {
+    html += `<li><strong>Padrões de Movimentação (Top Produtos):</strong><ul style="margin-top:6px; margin-bottom:8px;">`;
+    topProductsDetailed.forEach(([pName, pData]) => {
+      const topRoute = Object.entries(pData.routes).sort((a, b) => b[1].value - a[1].value)[0];
+      const pPrice = pData.totalQty > 0 ? pData.totalValue / pData.totalQty : 0;
+      const rPrice = topRoute[1].qty > 0 ? topRoute[1].value / topRoute[1].qty : 0;
+      const rPct = (topRoute[1].value / pData.totalValue * 100).toFixed(1) + '%';
+      
+      html += `<li style="padding-left:15px; margin-top:4px; font-size:0.85rem; list-style-type:circle;">O <strong>${pName}</strong> teve um preço médio global de $ ${fmtNum(pPrice, 2)}/kg. Seu fluxo mais forte seguiu o padrão <strong>${topRoute[0]}</strong>, representando ${rPct} do volume deste produto (negociados a $ ${fmtNum(rPrice, 2)}/kg).</li>`;
+    });
+    html += `</ul></li>`;
   }
   if (topSup) {
     html += `<li><strong>Fornecedor Líder:</strong> A maior origem agregada de insumos veio através de <strong>${topSup[0]}</strong>, com transações totais de <strong>$ ${fmtNum(topSup[1], 2)}</strong>.</li>`;
