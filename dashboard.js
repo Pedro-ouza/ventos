@@ -295,7 +295,66 @@ function updateCharts(){
     options:{...cDef,scales:{x:{ticks:{color:'#64748b',font:{size:8},maxRotation:45},grid:{display:false}},
       y:{ticks:{color:'#64748b',font:{size:10},callback:v=>'$ '+fmtNum(v)},grid:{color:'#1e293b'}}}}});
 
-  // 7 Avg Price per Product per Region (HEATMAP-style grouped bar)
+  // 7 Top 10 Routes
+  const routeVal = {};
+  const routeQty = {};
+  filtered.forEach(r => {
+    if (r.qty > 0) {
+      const sc = r.supplierCountry || 'origem indefinida';
+      const bc = r.buyerCountry || 'destino indefinido';
+      const k = `${sc} > ${bc}`;
+      routeVal[k] = (routeVal[k] || 0) + r.value;
+      routeQty[k] = (routeQty[k] || 0) + r.qty;
+    }
+  });
+  
+  const topRoutes = Object.entries(routeVal)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10);
+    
+  const routeLabels = topRoutes.map(d => d[0].substring(0,40));
+  const routeValues = topRoutes.map(d => d[1]);
+  const routeAvgPrices = topRoutes.map(d => routeQty[d[0]] > 0 ? d[1] / routeQty[d[0]] : 0);
+
+  destroyChart('routes');
+  charts.routes = new Chart(document.getElementById('chartRoutes'), {
+    type: 'bar',
+    data: {
+      labels: routeLabels,
+      datasets: [{
+        data: routeValues,
+        backgroundColor: PAL.slice(0, 10),
+        borderRadius: 4
+      }]
+    },
+    options: {
+      ...cDef,
+      indexAxis: 'y',
+      plugins: {
+        ...cDef.plugins,
+        tooltip: {
+          backgroundColor: '#1a2035', borderColor: '#232a3f', borderWidth: 1, titleColor: '#e2e8f0', bodyColor: '#94a3b8',
+          callbacks: {
+            label: (ctx) => {
+              const val = ctx.parsed.x;
+              const idx = ctx.dataIndex;
+              const avg = routeAvgPrices[idx];
+              return [
+                'Valor Total: $ ' + fmtNum(val, 2),
+                'Preço Médio: $ ' + fmtNum(avg, 2) + '/kg'
+              ];
+            }
+          }
+        }
+      },
+      scales: {
+        x: { ticks: { color: '#64748b', font: { size: 10 }, callback: v => '$ ' + fmtNum(v) }, grid: { color: '#1e293b' } },
+        y: { ticks: { color: '#94a3b8', font: { size: 9 } }, grid: { display: false } }
+      }
+    }
+  });
+
+  // 8 Avg Price per Product per Region (HEATMAP-style grouped bar)
   updatePriceChart();
 }
 
