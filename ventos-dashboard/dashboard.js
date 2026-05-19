@@ -7,8 +7,8 @@ const PAL=['#6366f1','#818cf8','#34d399','#fb923c','#f87171','#a78bfa','#38bdf8'
 const PAL_ORANGE=['#fb923c','#fbbf24','#f97316','#fde68a','#fdba74','#f59e0b','#fcd34d','#ea580c','#d97706','#fef08a','#c2410c','#fef3c7','#92400e','#fffbeb','#78350f'];
 
 // ── Classification helpers ──
-const LIMONENE_RE = /LIMONENE|LIMONEN|D-LIMONEN|CPO|COLD\s*PRESS/i;
-const ORANGE_RE   = /ORANGE|NARANJA|SINENSAL|SINENSIS|CITRUS\s*SIN|ACEITE.*NARAN|NARAN.*ACEITE/i;
+const LIMONENE_RE = /LIMONENE|LIMONEN|D-LIMONEN/i;
+const ORANGE_RE   = /ORANGE|NARANJA|SINENSAL|SINENSIS|CITRUS\s*SIN|ACEITE.*NARAN|NARAN.*ACEITE|CPO|COLD\s*PRESS/i;
 
 function classifyProduct(raw) {
   if (!raw) return null;
@@ -94,29 +94,27 @@ function variantLabel(raw, tab) {
        .replace(/,\s*$/,'').trim();
 
   if (tab === 'limonene') {
-    // Distinguish: Natural vs Synthetic, food grade, origin
-    if (/NATURAL/.test(t))    return 'd-Limonene Natural';
+    if (/NATURAL/.test(t))      return 'd-Limonene Natural';
     if (/FOOD\s*GRADE/.test(t)) return 'd-Limonene Food Grade';
-    if (/SYNTHETIC/.test(t))  return 'd-Limonene Synthetic';
-    if (/CPO|COLD\s*PRESS/.test(t)) return 'CPO (Cold Pressed Orange)';
-    if (/BRAZIL|BRASIL/.test(t))  return 'd-Limonene (Brazil)';
-    if (/CHINA/.test(t))          return 'd-Limonene (China)';
-    if (/INDIA/.test(t))          return 'd-Limonene (India)';
-    if (/ARGENTINA/.test(t))      return 'd-Limonene (Argentina)';
+    if (/SYNTHETIC/.test(t))    return 'd-Limonene Synthetic';
+    if (/BRAZIL|BRASIL/.test(t)) return 'd-Limonene (Brazil)';
+    if (/CHINA/.test(t))         return 'd-Limonene (China)';
+    if (/INDIA/.test(t))         return 'd-Limonene (India)';
+    if (/ARGENTINA/.test(t))     return 'd-Limonene (Argentina)';
     return 'd-Limonene';
   }
 
   if (tab === 'orange') {
-    // Distinguish: fold/5-fold/10-fold, Brazil, cold pressed, terpeneless
     if (/TERPENELESS|TERPENE\s*LESS/.test(t)) return 'Orange Oil Terpeneless';
-    if (/10\s*FOLD|TEN\s*FOLD/.test(t))   return 'Orange Oil 10-Fold';
-    if (/5\s*FOLD|FIVE\s*FOLD/.test(t))   return 'Orange Oil 5-Fold';
-    if (/COLD\s*PRESS/.test(t))           return 'Orange Oil Cold Pressed';
-    if (/BRAZIL|BRASIL/.test(t))          return 'Orange Oil (Brazil)';
-    if (/ARGENTINA/.test(t))              return 'Orange Oil (Argentina)';
-    if (/MEXICO|MÉXI/.test(t))            return 'Orange Oil (Mexico)';
-    if (/CHINA/.test(t))                  return 'Orange Oil (China)';
-    if (/SINENSAL|SINENSIS/.test(t))      return 'Citrus Sinensis Oil';
+    if (/10\s*FOLD|TEN\s*FOLD/.test(t))       return 'Orange Oil 10-Fold';
+    if (/5\s*FOLD|FIVE\s*FOLD/.test(t))       return 'Orange Oil 5-Fold';
+    if (/CPO/.test(t))                         return 'CPO (Cold Pressed Orange)';
+    if (/COLD\s*PRESS/.test(t))               return 'Orange Oil Cold Pressed';
+    if (/BRAZIL|BRASIL/.test(t))              return 'Orange Oil (Brazil)';
+    if (/ARGENTINA/.test(t))                  return 'Orange Oil (Argentina)';
+    if (/MEXICO|MÉXI/.test(t))               return 'Orange Oil (Mexico)';
+    if (/CHINA/.test(t))                      return 'Orange Oil (China)';
+    if (/SINENSAL|SINENSIS/.test(t))          return 'Citrus Sinensis Oil';
     if (/ACEITE.*NARAN|NARAN.*ACEITE|ACEITE DE NARAN/.test(t)) return 'Aceite de Naranja';
     return 'Orange Oil';
   }
@@ -191,7 +189,7 @@ async function loadData(){
     const d = parseDate(r[K.data]); if (!d) return null;
     const rawProduct = (r[K.produto] || '').trim();
     const tab = classifyProduct(rawProduct);
-    if (!tab) return null; // skip rows not matching either product
+    if (!tab) return null;
     const buyer    = canonBuyer(r[K.buyer] || '');
     const supplier = canonSupplier(r[K.provedor] || '');
     const bCountry = (r[K.buyerCountry] || '').trim();
@@ -203,8 +201,7 @@ async function loadData(){
       supplier,
       supplierCountry: (r[K.paisProv] || '').trim(),
       productRaw: rawProduct,
-      tab,   // 'limonene' | 'orange'
-      // variant is computed per-tab on demand
+      tab,
       hsCode:    (r[K.hs] || '').trim(),
       qty:       parseNum(r[K.qtd]),
       unit:      (r[K.unidade] || '').trim(),
@@ -215,7 +212,6 @@ async function loadData(){
     };
   }).filter(Boolean).sort((a,b) => a.date - b.date);
 
-  // Pre-compute variant labels
   allData.forEach(r => { r.product = variantLabel(r.productRaw, r.tab); });
 
   populateFilters();
@@ -227,22 +223,18 @@ async function loadData(){
 function setTab(tab) {
   activeTab = tab;
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
-  // Recolour KPI gradient accent
   document.documentElement.style.setProperty(
     '--tab-accent', tab === 'limonene' ? '#6366f1' : '#fb923c'
   );
   document.documentElement.style.setProperty(
     '--tab-accent2', tab === 'limonene' ? '#818cf8' : '#fbbf24'
   );
-  // Update chart titles
   document.getElementById('chartTimelineTitle').textContent =
     tab === 'limonene' ? '📈 Faturamento d-Limonene por Mês' : '📈 Faturamento Orange Oil por Mês';
   document.getElementById('chartProductsTitle').textContent =
     tab === 'limonene' ? '🧪 Top 15 Variantes d-Limonene (Valor)' : '🍊 Top 15 Variantes Orange Oil (Valor)';
-  // Reset filters and repopulate
   document.querySelectorAll('.filters-bar select').forEach(s => s.value = '');
   document.querySelectorAll('.filters-bar input').forEach(i => i.value = '');
-  // Clear old filter options (keep first "Todos")
   ['filterBuyerCountry','filterSupplierCountry','filterBuyer','filterSupplier','filterDirection'].forEach(id => {
     const sel = document.getElementById(id);
     while (sel.options.length > 1) sel.remove(1);
@@ -371,7 +363,6 @@ const hBar = (id, data, name) => {
 };
 
 function updateCharts(){
-  // 1 Timeline
   const mo = {};
   filtered.forEach(r => {
     const k = r.date.getFullYear() + '-' + String(r.date.getMonth()+1).padStart(2,'0');
@@ -385,16 +376,10 @@ function updateCharts(){
     options: { ...cDef }
   });
 
-  // 2 Buyer Country
   hBar('chartBuyerCountry', topN(filtered,'buyerCountry','value',10), 'buyerCountry');
-
-  // 3 Top Buyers (External only)
   hBar('chartBuyers', topN(filtered.filter(r => !r.isInternal),'buyer','value',10), 'buyers');
-
-  // 4 Top Suppliers
   hBar('chartSuppliers', topN(filtered,'supplier','value',10), 'suppliers');
 
-  // 5 Supplier Country doughnut
   const scD = topN(filtered,'supplierCountry','value',10);
   destroyChart('supplierCountry');
   charts.supplierCountry = new Chart(document.getElementById('chartSupplierCountry'), {
@@ -413,7 +398,6 @@ function updateCharts(){
     }
   });
 
-  // 6 Top Variants
   const pd = topN(filtered,'product','value',15);
   destroyChart('products');
   charts.products = new Chart(document.getElementById('chartProducts'), {
@@ -431,7 +415,6 @@ function updateCharts(){
     }
   });
 
-  // 7 Avg Price per Variant per Region
   updatePriceChart();
 }
 
@@ -511,7 +494,6 @@ function updateInsights() {
   const biggestExt = extData.reduce((max,r) => r.value > (max ? max.value : 0) ? r : max, null);
   const biggestInt = intData.reduce((max,r) => r.value > (max ? max.value : 0) ? r : max, null);
 
-  // Price trend: compare first half vs second half
   const half = Math.floor(filtered.length / 2);
   const avgPriceFirst = half > 0 ? filtered.slice(0, half).reduce((s,r) => s + (r.qty > 0 ? r.value/r.qty : 0), 0) / half : 0;
   const avgPriceLast  = half > 0 ? filtered.slice(half).reduce((s,r) => s + (r.qty > 0 ? r.value/r.qty : 0), 0) / (filtered.length - half) : 0;
